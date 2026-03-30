@@ -1,0 +1,13 @@
+base_config: ../../configs/base.yaml
+
+run_id: coding_task_001
+description: "Write and run a small Python script."
+task: "Write a Python function that generates the first 20 Fibonacci numbers, then run it and show the output."
+
+agent:
+  max_steps: 6
+
+tools:
+  - type: tools.python_sandbox.PythonSandboxTool
+    timeout_s: 20.0
+    max_output_chars: 2000

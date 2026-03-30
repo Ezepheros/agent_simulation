@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "small-agent"
+version = "0.1.0"
+description = "LLM agent experiments with small local models via LMStudio"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml",
+    "openai>=1.0",          # LMStudio exposes an OpenAI-compatible API
+    "httpx",                # WebFetch HTTP client
+    "beautifulsoup4",       # HTML parsing for WebFetch
+    "google-auth-oauthlib", # Gmail OAuth2 flow
+    "google-api-python-client",  # Gmail REST API
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "mypy"]
+
+[project.scripts]
+run-agent = "scripts.run_agent:main"
+
+[tool.ruff]
+line-length = 100

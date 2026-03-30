@@ -1,0 +1,27 @@
+base_config: ../../configs/base.yaml
+
+run_id: weekly_digest_001
+description: "Read emails, research unknown topics on the web, produce a formatted digest via Python."
+task: >
+  Read my emails since the new year. Classify each email's urgency and write a one-sentence summary. 
+  For emails about topics you're unfamiliar with, use the web tool to research and gather more information.
+  
+
+agent:
+  max_steps: 12
+
+tools:
+  - type: tools.gmail.GmailTool
+    max_results: 8
+    max_body_chars: 400
+
+  - type: tools.web_fetch.WebFetchTool
+    max_chars: 1500
+    timeout_s: 15.0
+
+  - type: tools.python_sandbox.PythonSandboxTool
+    timeout_s: 20.0
+    max_output_chars: 1000
+
+logging:
+  level: DEBUG

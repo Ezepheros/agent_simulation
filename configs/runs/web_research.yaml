@@ -1,0 +1,13 @@
+base_config: ../../configs/base.yaml
+
+run_id: web_research_001
+description: "Research a topic using web fetching only."
+task: "What are the key differences between ReAct and Chain-of-Thought prompting? Search the web for recent papers and summarise."
+
+agent:
+  max_steps: 8
+
+tools:
+  - type: tools.web_fetch.WebFetchTool
+    max_chars: 6000
+    timeout_s: 15.0

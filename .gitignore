@@ -1,0 +1,18 @@
+.env
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+dist/
+
+# Run outputs — ignore logs and results but keep YAML configs
+runs/**/logs/
+runs/**/*.log
+runs/**/*.jsonl
+runs/**/*.json
+runs/**/*.faiss
+runs/**/*.pkl
+runs/**/*.parquet
+
+# Keep YAML configs if someone places them under runs/
+!runs/**/*.yaml

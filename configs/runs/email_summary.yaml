@@ -1,0 +1,13 @@
+base_config: ../../configs/base.yaml
+
+run_id: email_summary_001
+description: "Summarise recent unread emails from Gmail."
+task: "Read my most recent 5 unread emails and give me a concise summary of each."
+
+agent:
+  max_steps: 5
+
+tools:
+  - type: tools.gmail.GmailTool
+    max_results: 5
+    max_body_chars: 1500

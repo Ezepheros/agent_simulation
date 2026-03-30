@@ -1,0 +1,16 @@
+base_config: ../../configs/base.yaml
+
+run_id: email_triage_001
+description: "Identify emails from the last 2 weeks that require immediate attention."
+task: >
+  Over the last 2 weeks, which emails require my immediate attention and that I should respond to?
+  Search only the Primary inbox (use query "category:primary newer_than:14d"), read them,
+  and give me a prioritised list with a one-sentence reason for each.
+
+agent:
+  max_steps: 6
+
+tools:
+  - type: tools.gmail.GmailTool
+    max_results: 20
+    max_body_chars: 1500
