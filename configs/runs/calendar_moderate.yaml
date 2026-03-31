@@ -1,0 +1,18 @@
+base_config: ../../configs/base.yaml
+
+run_id: calendar_moderate_001
+description: >
+  Moderate complexity: the agent must search for the event first to get its ID,
+  then compute the new end time to preserve duration, then call modify.
+task: >
+  Move the standup meeting I have on my calendar to the equivalent time tomorrow in the PST timezone.
+  It is currently scheduled for tomorrow at 9:00 AM UTC.
+  Keep the same duration.
+
+agent:
+  max_steps: 6
+
+tools:
+  - type: tools.google_calendar.SearchCalendarEventsTool
+    max_results: 10
+  - type: tools.google_calendar.ModifyCalendarEventTool

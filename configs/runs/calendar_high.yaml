@@ -1,0 +1,19 @@
+base_config: ../../configs/base.yaml
+
+run_id: calendar_high_001
+description: >
+  High complexity: agent must fetch all meetings in the next 7 days, reason about
+  which days already have early events, then create prep blocks for each eligible
+  meeting — multiple search + create calls with cross-event reasoning.
+task: >
+  Look at all the meetings I have in the next 7 days. For each meeting, create
+  a 30-minute 'Prep' block at 8:00 AM on the same day. Skip any day that
+  already has an event starting before 9:00 AM.
+
+agent:
+  max_steps: 20
+
+tools:
+  - type: tools.google_calendar.SearchCalendarEventsTool
+    max_results: 20
+  - type: tools.google_calendar.CreateCalendarEventTool

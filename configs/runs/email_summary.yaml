@@ -5,7 +5,7 @@ description: "Summarise recent unread emails from Gmail."
 task: "Read my most recent 5 unread emails and give me a concise summary of each."
 
 agent:
-  max_steps: 5
+  max_steps: 6
 
 tools:
   - type: tools.gmail.GmailTool

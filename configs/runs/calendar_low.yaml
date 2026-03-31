@@ -1,0 +1,15 @@
+base_config: ../../configs/base.yaml
+
+run_id: calendar_low_001
+description: >
+  Low complexity: all info is explicit in the task — no calendar lookup needed.
+  The agent just formats the args and calls create_calendar_event once.
+task: >
+  Create a calendar event on my primary calendar for tomorrow at 9:00 AM
+  titled 'Morning Standup' that lasts 30 minutes. Use the UTC timezone.
+
+agent:
+  max_steps: 4
+
+tools:
+  - type: tools.google_calendar.CreateCalendarEventTool
