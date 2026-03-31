@@ -8,7 +8,7 @@ description: ""
 llm:
   type: backends.lmstudio.LMStudioBackend
   base_url: http://localhost:1234/v1
-  model: qwen/qwen3.5-9b
+  model: mistralai/ministral-3-14b-reasoning
   temperature: 0.1
   max_tokens: 2048
   timeout_s: 120.0

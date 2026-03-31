@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 .venv/
 dist/
+agentenv/
 
 # Run outputs — ignore logs and results but keep YAML configs
 runs/**/logs/
