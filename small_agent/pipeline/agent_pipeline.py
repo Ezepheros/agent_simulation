@@ -9,7 +9,7 @@ from pathlib import Path
 
 from small_agent.config.schemas import RunConfig
 from small_agent.core.types import AgentRun
-from small_agent.logging import get_logger, setup_run_logging
+from small_agent.logging import get_logger, setup_run_logging, truncate
 from small_agent.registry import build
 
 
@@ -52,7 +52,7 @@ class AgentRunPipeline:
         self._save_result(agent_run)
         self._log.info(
             "Pipeline done | answer=%r | steps=%d | wall_time=%.1fs",
-            (agent_run.final_answer or "")[:120],
+            truncate(agent_run.final_answer or "", 120),
             agent_run.metrics.total_steps,
             agent_run.metrics.wall_time_s,
         )
@@ -137,7 +137,7 @@ class AgentRunPipeline:
                             "call_id": tr.call_id,
                             "tool_name": tr.tool_name,
                             "success": tr.success,
-                            "output_preview": (tr.output or "")[:300],
+                            "output_preview": truncate(tr.output or "", 300),
                             "error": tr.error,
                             "latency_ms": tr.latency_ms,
                         }

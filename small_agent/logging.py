@@ -59,6 +59,17 @@ class _JsonlHandler(logging.FileHandler):
 
 
 # ---------------------------------------------------------------------------
+# Utilities
+# ---------------------------------------------------------------------------
+
+def truncate(text: str, max_chars: int) -> str:
+    """Truncate text to max_chars and append a marker if it was cut off."""
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars] + " ...[truncated]"
+
+
+# ---------------------------------------------------------------------------
 # Setup
 # ---------------------------------------------------------------------------
 

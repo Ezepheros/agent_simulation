@@ -7,7 +7,7 @@ import json
 from small_agent.backends.base import BaseLLMBackend
 from small_agent.core.types import AgentStep, Message
 from small_agent.critics.base import BaseCritic, CritiqueResult, ProposedAction
-from small_agent.logging import get_logger
+from small_agent.logging import get_logger, truncate
 
 _CRITIC_SYSTEM_PROMPT = """\
 You are a precise critic reviewing an AI agent's proposed actions before they are executed.
@@ -91,7 +91,7 @@ class LLMCritic(BaseCritic):
                     status = "success" if tr.success else f"error: {tr.error}"
                     parts.append(
                         f"Tool result ({tr.tool_name}, {status}):\n"
-                        f"{tr.output[:600] if tr.output else '(no output)'}"
+                        f"{truncate(tr.output, 600) if tr.output else '(no output)'}"
                     )
 
         parts.append("## Current proposed action (NOT yet executed)")

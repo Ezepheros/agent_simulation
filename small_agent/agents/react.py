@@ -16,7 +16,7 @@ from small_agent.core.types import (
     ToolResult,
 )
 from small_agent.critics.base import BaseCritic, ProposedAction
-from small_agent.logging import get_logger
+from small_agent.logging import get_logger, truncate
 from small_agent.tools.base import BaseTool
 
 _DEFAULT_SYSTEM_PROMPT = """\
@@ -115,7 +115,7 @@ class ReActAgent(BaseAgent):
             "Context sent to LLM (%d messages):\n%s",
             len(messages),
             "\n".join(
-                f"  [{m.role.upper()}] {(m.content or '(no content)')[:300]}"
+                f"  [{m.role.upper()}] {truncate(m.content or '(no content)', 300)}"
                 + (f" + {len(m.tool_calls)} tool_call(s)" if m.tool_calls else "")
                 for m in messages
             ),
@@ -159,7 +159,7 @@ class ReActAgent(BaseAgent):
                 metrics.total_prompt_tokens += llm_resp.prompt_tokens
                 metrics.total_completion_tokens += llm_resp.completion_tokens
                 thought = llm_resp.content or ""
-                self._log.info("Revised thought after critique: %s", thought[:300])
+                self._log.info("Revised thought after critique: %s", truncate(thought, 300))
                 # Remove the injected critique exchange — it is captured in the step record,
                 # not needed in the ongoing conversation history
                 messages.pop()
@@ -235,7 +235,7 @@ class ReActAgent(BaseAgent):
                     result.tool_name,
                     result.success,
                     result.latency_ms,
-                    (result.output or result.error or "")[:200],
+                    truncate(result.output or result.error or "", 200),
                 )
 
                 messages.append(
