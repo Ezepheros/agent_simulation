@@ -26,7 +26,10 @@ Your job is to identify errors before they cause harm. Look for:
 
 Be concise and specific — point to the exact error and what the correct value should be.
 If the task or parameters are ambiguous in a way that could lead to a wrong action, flag the ambiguity
-and suggest the agent use the clarify tool to ask the user before proceeding.
+and instruct the agent: "Call the clarify tool with the following question: <your question here>".
+The agent should not take a critical action if there is any uncertainty about the correctness of the proposed action.
+A critical action is one that could cause irreversible changes or significant negative consequences if done incorrectly (e.g. deleting data, modifying calendar events, sending messages).
+A critical action can also be one that other future actions depend on — if the proposed action is wrong, it could cause a cascade of future errors.
 If everything looks correct and unambiguous, respond with exactly the word: OK
 Do not suggest improvements or alternatives unless there is an actual error or ambiguity.
 """
@@ -46,8 +49,9 @@ class LLMCritic(BaseCritic):
         task: str,
         previous_steps: list[AgentStep],
         proposed: ProposedAction,
+        agent_context: str | None = None,
     ) -> CritiqueResult:
-        prompt = self._build_prompt(task, previous_steps, proposed)
+        prompt = self._build_prompt(task, previous_steps, proposed, agent_context)
         messages = [
             Message(role="system", content=_CRITIC_SYSTEM_PROMPT),
             Message(role="user", content=prompt),
@@ -73,8 +77,12 @@ class LLMCritic(BaseCritic):
         task: str,
         previous_steps: list[AgentStep],
         proposed: ProposedAction,
+        agent_context: str | None = None,
     ) -> str:
-        parts = [f"## Task\n{task.strip()}\n"]
+        parts = []
+        if agent_context:
+            parts.append(f"## Agent context\n{agent_context.strip()}\n")
+        parts.append(f"## Task\n{task.strip()}\n")
 
         if previous_steps:
             parts.append("## Completed previous steps")
@@ -89,9 +97,12 @@ class LLMCritic(BaseCritic):
                     )
                 for tr in step.tool_results:
                     status = "success" if tr.success else f"error: {tr.error}"
+                    meta = (
+                        f" [metadata: {json.dumps(tr.metadata)}]" if tr.metadata else ""
+                    )
                     parts.append(
-                        f"Tool result ({tr.tool_name}, {status}):\n"
-                        f"{truncate(tr.output, 600) if tr.output else '(no output)'}"
+                        f"Tool result ({tr.tool_name}, {status}){meta}:\n"
+                        f"{truncate(tr.output, 2000) if tr.output else '(no output)'}"
                     )
 
         parts.append("## Current proposed action (NOT yet executed)")

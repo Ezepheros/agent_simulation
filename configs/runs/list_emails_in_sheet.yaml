@@ -1,0 +1,23 @@
+base_config: ../../configs/base.yaml
+
+run_id: list_emails_in_sheet_001
+description: >
+  Moderate complexity: The agent must read emails, extract relevant information, and write it to a Google Sheet
+task: >
+  Categorize my emails since the new year into "Work", "Personal", and "Other" based on their content.
+  For each email, write a row to a Google Sheet with the columns: "Subject", "Sender", "Category", and "Summary".
+  Use the web tool to research any unfamiliar topics mentioned in the emails to help with categorization and summarization.
+
+agent:
+  max_steps: 10
+
+tools:
+  - type: tools.gmail.GmailTool
+    max_results: 20
+  - type: tools.google_sheets.CreateSpreadsheetTool
+  - type: tools.google_sheets.AppendRowsTool
+  - type: tools.web_fetch.WebFetchTool
+  - type: tools.clarify.ClarifyTool
+
+critic:
+  enabled: true

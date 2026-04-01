@@ -1,0 +1,27 @@
+base_config: ../../configs/base.yaml
+
+run_id: wartime_stocks_presentation_001
+description: >
+  The agent researches wartime stock investment strategies from 2 web sources,
+  then writes a Google Doc with talking notes for a short presentation.
+task: >
+  Research what stocks or sectors are good to invest in during wartime.
+  Use exactly 2 web sources. Then create a Google Doc titled
+  "Wartime Stocks - Presentation Notes" and write concise talking notes for
+  a short (5-minute) presentation covering: why war affects markets, which
+  sectors tend to perform well, 2-3 specific stock examples if mentioned in
+  your sources, and one key risk to be aware of.
+  Cite both sources at the end of the document.
+
+agent:
+  max_steps: 15
+
+tools:
+  - type: tools.tavily.TavilySearchTool
+    max_results: 5
+  - type: tools.google_docs.CreateDocTool
+  - type: tools.google_docs.AppendTextTool
+  - type: tools.clarify.ClarifyTool
+
+critic:
+  enabled: false

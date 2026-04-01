@@ -23,6 +23,7 @@ _DEFAULT_SYSTEM_PROMPT = """\
 You are a helpful AI assistant with access to tools.
 Today's date is {today}.
 Think step by step. Use tools when needed to gather information or execute code.
+When you need clarification from the user, you MUST call the clarify tool — do not write a question in your response text.
 When you have enough information to answer the user's task, reply with your final answer.
 """
 
@@ -141,6 +142,7 @@ class ReActAgent(BaseAgent):
                 task=messages[1].content or "",  # user message is always index 1
                 previous_steps=previous_steps or [],
                 proposed=proposed,
+                agent_context=messages[0].content,  # system prompt with today's date
             )
             if result.has_issues:
                 critique_text = result.feedback

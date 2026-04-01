@@ -29,6 +29,7 @@ class ClarifyTool(BaseTool):
             "Use this sparingly — only when an incorrect assumption would lead to a wrong or "
             "harmful action (e.g. modifying the wrong calendar event, deleting something). "
             "Do not use it for questions you can resolve yourself."
+            "If you are unclear between multiple options, give a multiple choice question with the options listed, e.g. A: option 1, B: option 2, etc."
         )
 
     @property

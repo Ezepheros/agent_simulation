@@ -65,10 +65,13 @@ class LMStudioBackend(BaseLLMBackend):
         reasoning = getattr(choice, "reasoning_content", None) or getattr(choice, "thinking", None)
         tool_calls = self._extract_tool_calls(choice)
 
-        # Fallback: some models (e.g. Ministral with reasoning) write <tool_call> XML tags
-        # in the content field instead of using the structured tool_calls format
+        # Fallback: some models write <tool_call> XML in the content field instead of
+        # using structured tool_calls.  A second case occurs with thinking models that
+        # put the XML inside the reasoning (<think>) block and leave content empty.
         if not tool_calls and choice.content:
             tool_calls = self._extract_xml_tool_calls(choice.content)
+        if not tool_calls and reasoning and "<tool_call>" in reasoning:
+            tool_calls = self._extract_xml_tool_calls(reasoning)
 
         usage = response.usage
 

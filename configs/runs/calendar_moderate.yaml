@@ -7,7 +7,6 @@ description: >
 task: >
   Move the standup meeting I have on my calendar to the equivalent time tomorrow in the PST timezone.
   It is currently scheduled for tomorrow at 9:00 AM UTC.
-  Keep the same duration.
 
 agent:
   max_steps: 6

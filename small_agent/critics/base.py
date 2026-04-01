@@ -39,6 +39,11 @@ class BaseCritic(ABC):
         task: str,
         previous_steps: list[AgentStep],
         proposed: ProposedAction,
+        agent_context: str | None = None,
     ) -> CritiqueResult:
-        """Review the proposed action and return a CritiqueResult."""
+        """Review the proposed action and return a CritiqueResult.
+
+        agent_context: the agent's system prompt (already formatted), passed so
+        the critic shares the same date/time context as the agent.
+        """
         ...
