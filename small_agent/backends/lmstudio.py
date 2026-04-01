@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import re
 import time
+import uuid
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessage
@@ -62,6 +64,12 @@ class LMStudioBackend(BaseLLMBackend):
         choice = response.choices[0].message
         reasoning = getattr(choice, "reasoning_content", None) or getattr(choice, "thinking", None)
         tool_calls = self._extract_tool_calls(choice)
+
+        # Fallback: some models (e.g. Ministral with reasoning) write <tool_call> XML tags
+        # in the content field instead of using the structured tool_calls format
+        if not tool_calls and choice.content:
+            tool_calls = self._extract_xml_tool_calls(choice.content)
+
         usage = response.usage
 
         return LLMResponse(
@@ -111,6 +119,32 @@ class LMStudioBackend(BaseLLMBackend):
                     call_id=tc.id,
                     tool_name=tc.function.name,
                     arguments=args,
+                )
+            )
+        return results
+
+    @staticmethod
+    def _extract_xml_tool_calls(content: str) -> list[ToolCall]:
+        """Parse <tool_call><function=name><parameter=k>v</parameter></function></tool_call>
+        tags that some models emit as plain text instead of structured tool_calls."""
+        results = []
+        for block in re.findall(r"<tool_call>(.*?)</tool_call>", content, re.DOTALL):
+            fn_match = re.search(r"<function=(\w+)>(.*?)</function>", block, re.DOTALL)
+            if not fn_match:
+                continue
+            name = fn_match.group(1)
+            params_text = fn_match.group(2)
+            arguments = {
+                m.group(1): m.group(2).strip()
+                for m in re.finditer(
+                    r"<parameter=(\w+)>\n?(.*?)\n?</parameter>", params_text, re.DOTALL
+                )
+            }
+            results.append(
+                ToolCall(
+                    call_id=str(uuid.uuid4()),
+                    tool_name=name,
+                    arguments=arguments,
                 )
             )
         return results

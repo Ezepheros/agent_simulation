@@ -10,7 +10,7 @@ llm:
   base_url: http://localhost:1234/v1
   model: mistralai/ministral-3-14b-reasoning
   temperature: 0.1
-  max_tokens: 2048
+  max_tokens: 8192
   timeout_s: 120.0
 
 agent:

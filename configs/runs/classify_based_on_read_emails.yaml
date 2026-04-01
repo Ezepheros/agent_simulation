@@ -1,0 +1,19 @@
+base_config: ../../configs/base.yaml
+
+run_id: classify_based_on_read_emails_001
+description: >
+  The agent must read emails and create categoires of email that are not important based on which emails have been read.
+task: >
+  Read my emails since the new year. Create categories of email that are not important based on which emails have been read.
+
+agent:
+  max_steps: 6
+
+tools:
+  - type: tools.google_calendar.SearchCalendarEventsTool
+    max_results: 10
+  - type: tools.google_calendar.ModifyCalendarEventTool
+  - type: tools.gmail.GmailTool
+    max_results: 8
+    max_body_chars: 400
+  

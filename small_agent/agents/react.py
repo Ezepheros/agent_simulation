@@ -15,6 +15,7 @@ from small_agent.core.types import (
     RunMetrics,
     ToolResult,
 )
+from small_agent.critics.base import BaseCritic, ProposedAction
 from small_agent.logging import get_logger
 from small_agent.tools.base import BaseTool
 
@@ -44,11 +45,13 @@ class ReActAgent(BaseAgent):
         tools: list[BaseTool],
         system_prompt: str = _DEFAULT_SYSTEM_PROMPT,
         max_steps: int = 10,
+        critic: BaseCritic | None = None,
     ) -> None:
         self.backend = backend
         self.tools = {t.name: t for t in tools}
         self.system_prompt = system_prompt
         self.max_steps = max_steps
+        self.critic = critic
         self._log = get_logger(__name__)
 
     # ------------------------------------------------------------------
@@ -71,7 +74,9 @@ class ReActAgent(BaseAgent):
 
         for step_num in range(1, self.max_steps + 1):
             self._log.info("--- Step %d ---", step_num)
-            step, messages, done = self._step(step_num, messages, tool_schemas, run.metrics)
+            step, messages, done = self._step(
+                step_num, messages, tool_schemas, run.metrics, list(run.steps)
+            )
             run.steps.append(step)
 
             if done:
@@ -102,6 +107,7 @@ class ReActAgent(BaseAgent):
         messages: list[Message],
         tool_schemas,
         metrics: RunMetrics,
+        previous_steps: list[AgentStep] | None = None,
     ) -> tuple[AgentStep, list[Message], bool]:
         t0 = time.monotonic()
 
@@ -127,12 +133,77 @@ class ReActAgent(BaseAgent):
         else:
             self._log.info("Thought: (none — model went straight to tool call)")
 
+        # --- Critic review (before tool execution) -----------------------
+        critique_text: str | None = None
+        if self.critic is not None:
+            proposed = ProposedAction(thought=thought, tool_calls=llm_resp.tool_calls)
+            result = self.critic.review(
+                task=messages[1].content or "",  # user message is always index 1
+                previous_steps=previous_steps or [],
+                proposed=proposed,
+            )
+            if result.has_issues:
+                critique_text = result.feedback
+                self._log.warning("Critic raised issues — asking agent to revise:\n%s", critique_text)
+                # Inject critique as a user message so the agent can revise
+                messages.append(Message(role="assistant", content=thought, tool_calls=llm_resp.tool_calls))
+                messages.append(Message(
+                    role="user",
+                    content=(
+                        f"[CRITIC REVIEW]\n{critique_text}\n\n"
+                        "Please correct the errors above and provide a revised response."
+                    ),
+                ))
+                # One revision attempt
+                llm_resp = self.backend.complete(messages, tools=tool_schemas)
+                metrics.total_prompt_tokens += llm_resp.prompt_tokens
+                metrics.total_completion_tokens += llm_resp.completion_tokens
+                thought = llm_resp.content or ""
+                self._log.info("Revised thought after critique: %s", thought[:300])
+                # Remove the injected critique exchange — it is captured in the step record,
+                # not needed in the ongoing conversation history
+                messages.pop()
+                messages.pop()
+
         # Append the assistant's turn — tool_calls must be included so the
         # model can later match "tool" role messages back to its own requests
         messages.append(Message(role="assistant", content=thought, tool_calls=llm_resp.tool_calls))
 
         tool_results: list[ToolResult] = []
         done = False
+
+        if not llm_resp.tool_calls and not thought.strip():
+            if critique_text:
+                # Empty response after a critic revision — model failed to act on the feedback.
+                # Do NOT treat as final answer; let the loop continue to the next step.
+                self._log.warning(
+                    "Step %d: empty response after critic revision — model did not produce "
+                    "a tool call or answer. Continuing to next step.",
+                    step_num,
+                )
+            else:
+                # Empty response with no critique context — likely hit max_tokens mid-reasoning.
+                self._log.warning(
+                    "Step %d: empty response (no tool calls, no content) — "
+                    "model may have hit max_tokens mid-reasoning. "
+                    "Consider raising max_tokens in base.yaml.",
+                    step_num,
+                )
+                done = True
+
+        if (
+            not llm_resp.tool_calls
+            and llm_resp.reasoning
+            and "<tool_call>" in llm_resp.reasoning
+        ):
+            # Model planned a tool call inside its reasoning but never emitted it as structured
+            # output — common failure mode with reasoning models under confusion or token pressure
+            self._log.warning(
+                "Step %d: model wrote a tool call inside its reasoning tokens but did not "
+                "emit it as a structured response. The call was NOT executed. "
+                "The model may be confused — consider simplifying the task or clarifying the prompt.",
+                step_num,
+            )
 
         if llm_resp.tool_calls:
             # Execute each requested tool
@@ -184,6 +255,7 @@ class ReActAgent(BaseAgent):
             step_number=step_num,
             thought=thought,
             reasoning=llm_resp.reasoning,
+            critique=critique_text,
             tool_calls=llm_resp.tool_calls,
             tool_results=tool_results,
             final_answer=final_answer,

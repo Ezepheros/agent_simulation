@@ -48,6 +48,21 @@ class LLMConfig(BaseModel):
         return self.model_dump()
 
 
+class CriticConfig(BaseModel):
+    """Optional critic that reviews each proposed step before tool execution.
+
+    By default the critic reuses the same LLM backend as the agent.
+    Override llm to use a separate model for critiquing.
+    """
+
+    enabled: bool = False
+    type: str = "critics.llm_critic.LLMCritic"
+    # If set, uses a different LLM for critiquing (e.g. a faster/cheaper model)
+    llm: LLMConfig | None = None
+
+    model_config = {"extra": "allow"}
+
+
 class AgentConfig(BaseModel):
     """Config for the agent implementation."""
 
@@ -88,6 +103,7 @@ class RunConfig(BaseModel):
 
     agent: AgentConfig
     llm: LLMConfig
+    critic: CriticConfig = Field(default_factory=CriticConfig)
     tools: list[ToolConfig] = Field(default_factory=list)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 

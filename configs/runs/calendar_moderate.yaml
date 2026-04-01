@@ -16,3 +16,7 @@ tools:
   - type: tools.google_calendar.SearchCalendarEventsTool
     max_results: 10
   - type: tools.google_calendar.ModifyCalendarEventTool
+  - type: tools.clarify.ClarifyTool
+
+critic:
+  enabled: true

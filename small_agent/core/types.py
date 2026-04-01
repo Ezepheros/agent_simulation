@@ -100,6 +100,8 @@ class AgentStep:
     thought: str
     # Internal reasoning/thinking tokens if the backend exposes them
     reasoning: str | None = None
+    # Critique produced by an LLMCritic before tool execution (None if no critic configured)
+    critique: str | None = None
     tool_calls: list[ToolCall] = field(default_factory=list)
     tool_results: list[ToolResult] = field(default_factory=list)
     # Set only on the final step when the agent decides it is done

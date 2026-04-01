@@ -42,7 +42,8 @@ class AgentRunPipeline:
 
         backend = self._build_backend()
         tools = self._build_tools()
-        agent = self._build_agent(backend, tools)
+        critic = self._build_critic(backend)
+        agent = self._build_agent(backend, tools, critic)
 
         t0 = time.monotonic()
         agent_run = agent.run(cfg.task, run_id=cfg.run_id)
@@ -78,13 +79,27 @@ class AgentRunPipeline:
             tools.append(build(tc.type, params))
         return tools
 
-    def _build_agent(self, backend, tools):
+    def _build_critic(self, backend):
+        cfg = self.cfg.critic
+        if not cfg.enabled:
+            return None
+        critic_backend = backend
+        if cfg.llm is not None:
+            self._log.info("Building critic backend | model=%s", cfg.llm.model)
+            params = cfg.llm.to_build_dict()
+            params.pop("type")
+            critic_backend = build(cfg.llm.type, params)
+        self._log.info("Building critic | type=%s", cfg.type)
+        return build(cfg.type, {"backend": critic_backend})
+
+    def _build_agent(self, backend, tools, critic):
         cfg = self.cfg.agent
         self._log.info("Building agent | type=%s | max_steps=%d", cfg.type, cfg.max_steps)
         params = cfg.to_build_dict()
         params.pop("type")
         params["backend"] = backend
         params["tools"] = tools
+        params["critic"] = critic
         # Remove None system_prompt so agent uses its own default
         if params.get("system_prompt") is None:
             params.pop("system_prompt")
@@ -111,6 +126,7 @@ class AgentRunPipeline:
                 {
                     "step_number": s.step_number,
                     "reasoning": s.reasoning,
+                    "critique": s.critique,
                     "thought": s.thought,
                     "tool_calls": [
                         {"call_id": tc.call_id, "tool_name": tc.tool_name, "arguments": tc.arguments}
